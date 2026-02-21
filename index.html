@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Convert PDFs to Dark Mode - Offline</title>
+  <title>Dark PDF | Convert PDFs to Dark Mode | Offline</title>
   <style>
     :root {
       color-scheme: dark light;
@@ -31,11 +31,10 @@
     }
 
     #uploadContainer {
-      position: absolute;
-      top: 150px;
-      left: 100px;
-      right: 100px;
-      bottom: 100px;
+      display: block;
+      width: 80vw;
+      height: 70vh;
+      margin: 20px auto auto auto;
       cursor: pointer;
       font-size: 10em;
       border: 2px dashed;
@@ -46,8 +45,8 @@
     #downloadBtn {
       display: none;
       position: absolute;
-      top: 30px;
-      right: 30px;
+      top: 20px;
+      right: 20px;
       font-size: 2em;
       border: none;
       cursor: pointer;
@@ -56,13 +55,15 @@
 
     #pdfContainer {
       width: 90%;
-      margin: 0 auto;
+      margin: auto;
     }
 
-    canvas {
+    canvas,
+    img {
       width: 100%;
       border: 1px solid;
       border-radius: 4px;
+      margin-bottom: 10px;
     }
 
     #progressContainer {
@@ -83,7 +84,7 @@
     }
 
     #progressText {
-      margin-top: 20px;
+      margin: 20px;
       font-weight: bold;
     }
   </style>
@@ -91,11 +92,11 @@
 
 <body>
   <main>
-    <h1>PDF Dark Mode Converter</h1>
+    <h1>👁️ ❤️ Dark PDF</h1>
     <div id="inputContainer">
       <input type="number" id="scaleFactor" placeholder="Scale Factor (1-5): 1" /> |
       <input type="number" id="startPage" placeholder="Start Page: 1" /> |
-      <input type="number" id="endPage" placeholder="End Page: N" /> |
+      <input type="number" id="endPage" placeholder="End Page: auto" /> |
       <input type="number" id="tolerance" placeholder="Color Limit (0-255): 0" />
       <input type="file" id="fileInput" multiple accept="application/pdf" />
       <label for="fileInput" id="uploadContainer">⊕</label>
@@ -104,7 +105,7 @@
       <div id="progressBar"></div>
       <div id="progressText">0/0</div>
     </div>
-    <button id="downloadBtn">⬇︎</button>
+    <button id="downloadBtn">💾</button>
     <div id="pdfContainer"></div>
   </main>
 
@@ -144,7 +145,7 @@
       const blob = new Blob([bytes], { type: "application/pdf" });
       const link = document.createElement("a");
       link.href = URL.createObjectURL(blob);
-      link.download = `${name}_dark_mode.pdf`;
+      link.download = `${name} (Dark Mode).pdf`;
       link.click();
       downloadBtn.style.display = "none";
     }
@@ -184,19 +185,35 @@
       inputContainer.style.display = "none";
       progressContainer.style.display = "block";
 
+      if (!multipleInput) {
+        pdfContainer.innerHTML = "";
+      }
+
+      const canvas = document.createElement("canvas");
+      const canvasContext = canvas.getContext("2d", { willReadFrequently: true });
+
       for (let i = pageStart; i <= pageEnd; i++) {
         progressBar.style.width = `${i / pageEnd * 100}%`;
         progressText.innerText = (i === pageEnd) ? "Finalizing..." : `${i}/${pageEnd}`;
 
+        // Yield to the event loop to prevent UI freezing and allow GC
+        await new Promise(resolve => requestAnimationFrame(resolve));
+
         const page = await pdf.getPage(i);
-        const viewport = page.getViewport({ scale: pageScale });
-        const canvas = document.createElement("canvas");
-        const canvasContext = canvas.getContext("2d");
 
-        canvas.width = viewport.width;
-        canvas.height = viewport.height;
+        // 1. Base viewport reflects the actual dimensions of the PDF page
+        const baseViewport = page.getViewport({ scale: 1 });
 
-        await page.render({ canvasContext, viewport }).promise;
+        // 2. Render viewport reflects the resolution we process the image at.
+        // We multiply the user's scale by the device's pixel ratio (or at least 2x)
+        // to guarantee high-DPI text rendering, eliminating blur even at Scale 1.
+        const renderScale = pageScale * Math.max(window.devicePixelRatio || 1, 2);
+        const renderViewport = page.getViewport({ scale: renderScale });
+
+        canvas.width = renderViewport.width;
+        canvas.height = renderViewport.height;
+
+        await page.render({ canvasContext, viewport: renderViewport }).promise;
 
         // Apply dark mode effect
         const imageData = canvasContext.getImageData(0, 0, canvas.width, canvas.height);
@@ -222,19 +239,31 @@
         }
 
         canvasContext.putImageData(imageData, 0, 0);
-        if (!multipleInput) pdfContainer.appendChild(canvas);
-
-        // Convert modified canvas to PNG and add to PDF
-        const imgBytes = await new Promise((resolve) => {
-          canvas.toBlob((blob) => blob.arrayBuffer().then(resolve), "image/png");
+        const imgBlob = await new Promise((resolve) => {
+          canvas.toBlob(resolve, "image/jpeg", 1);
         });
-        const jpgImage = await pdfDoc.embedPng(imgBytes);
-        const newPage = pdfDoc.addPage([viewport.width, viewport.height]);
+        const imgBytes = await imgBlob.arrayBuffer();
+        const jpgImage = await pdfDoc.embedJpg(imgBytes);
+
+        if (!multipleInput) {
+          const img = document.createElement("img");
+          img.src = URL.createObjectURL(imgBlob);
+          pdfContainer.appendChild(img);
+        }
+
+        // 3. Keep the new PDF page the *exact same physical size* as the original page,
+        // but draw our high-resolution JPEG into it!
+        const newPage = pdfDoc.addPage([baseViewport.width, baseViewport.height]);
         newPage.drawImage(jpgImage, {
           x: 0, y: 0,
-          width: viewport.width,
-          height: viewport.height,
+          width: baseViewport.width,
+          height: baseViewport.height,
         });
+        page.cleanup();
+      }
+
+      if (pdf.destroy) {
+        pdf.destroy();
       }
 
       progressContainer.style.display = "none";

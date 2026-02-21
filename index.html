@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Convert PDFs to Dark Mode - Offline</title>
+  <style>
+    :root {
+      color-scheme: dark light;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      text-align: center;
+      font-family: Arial, sans-serif;
+    }
+
+    #fileInput {
+      display: none;
+    }
+
+    input {
+      padding: 10px;
+      margin: 10px;
+      border: none;
+      border-radius: 4px;
+    }
+
+    #uploadContainer {
+      position: absolute;
+      top: 150px;
+      left: 100px;
+      right: 100px;
+      bottom: 100px;
+      cursor: pointer;
+      font-size: 10em;
+      border: 2px dashed;
+      border-radius: 4px;
+      align-content: center;
+    }
+
+    #downloadBtn {
+      display: none;
+      position: absolute;
+      top: 30px;
+      right: 30px;
+      font-size: 2em;
+      border: none;
+      cursor: pointer;
+      background-color: transparent;
+    }
+
+    #pdfContainer {
+      width: 90%;
+      margin: 0 auto;
+    }
+
+    canvas {
+      width: 100%;
+      border: 1px solid;
+      border-radius: 4px;
+    }
+
+    #progressContainer {
+      display: none;
+      width: 90%;
+      max-width: 90%;
+      padding: 10px;
+      margin: 20px auto;
+      text-align: center;
+    }
+
+    #progressBar {
+      width: 0;
+      height: 20px;
+      line-height: 20px;
+      background-color: dodgerblue;
+      transition: width 0.3s ease-in-out;
+    }
+
+    #progressText {
+      margin-top: 20px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+
+<body>
+  <main>
+    <h1>PDF Dark Mode Converter</h1>
+    <div id="inputContainer">
+      <input type="number" id="scaleFactor" placeholder="Scale Factor (1-5): 1" /> |
+      <input type="number" id="startPage" placeholder="Start Page: 1" /> |
+      <input type="number" id="endPage" placeholder="End Page: N" /> |
+      <input type="number" id="tolerance" placeholder="Color Limit (0-255): 0" />
+      <input type="file" id="fileInput" multiple accept="application/pdf" />
+      <label for="fileInput" id="uploadContainer">⊕</label>
+    </div>
+    <div id="progressContainer">
+      <div id="progressBar"></div>
+      <div id="progressText">0/0</div>
+    </div>
+    <button id="downloadBtn">⬇︎</button>
+    <div id="pdfContainer"></div>
+  </main>
+
+  <script src="lib/pdf.min.js"></script>
+  <script>pdfjsLib.GlobalWorkerOptions.workerSrc = "lib/pdf.worker.min.js";</script>
+  <script src="lib/pdf-lib.min.js" defer></script>
+
+  <script>
+    const progressContainer = document.getElementById("progressContainer");
+    const progressBar = document.getElementById("progressBar");
+    const progressText = document.getElementById("progressText");
+
+    const downloadBtn = document.getElementById("downloadBtn");
+    const pdfContainer = document.getElementById("pdfContainer");
+    const uploadContainer = document.getElementById("uploadContainer");
+
+    const inputContainer = document.getElementById("inputContainer");
+    const inputScaleFactor = document.getElementById("scaleFactor");
+    const inputStartPage = document.getElementById("startPage");
+    const inputEndPage = document.getElementById("endPage");
+    const inputTolerance = document.getElementById("tolerance");
+
+    /**
+     * If multiple files selected:
+     * - Don't display converted PDF in browser.
+     * - Enable auto-downlod.
+     */
+    let multipleInput;
+
+    document.getElementById("fileInput").onchange = handleUpload;
+
+    document.body.ondrop = handleUpload;
+    document.body.ondragover = (event) => event.preventDefault();
+
+    function handleDownload(name, bytes) {
+      if (!bytes) return;
+      const blob = new Blob([bytes], { type: "application/pdf" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = `${name}_dark_mode.pdf`;
+      link.click();
+      downloadBtn.style.display = "none";
+    }
+
+    function handleUpload(event) {
+      event.preventDefault();
+      const files = event.dataTransfer ? event.dataTransfer.files : event.target.files;
+      multipleInput = files.length > 1;
+      for (const file of files) handleFile(file);
+    }
+
+    function handleFile(file) {
+      if (file.type !== "application/pdf") return;
+      const fileReader = new FileReader();
+      fileReader.onload = async function () {
+        await renderPDF(file.name, new Uint8Array(this.result));
+      };
+      fileReader.readAsArrayBuffer(file);
+    }
+
+    function minmax(value, min, max) {
+      return Math.min(Math.max((isNaN(value) ? 0 : value), isNaN(min) ? max : min), max);
+    }
+
+    async function renderPDF(fileName, pdfData) {
+      const pdf = await pdfjsLib.getDocument({ data: pdfData }).promise;
+      const pdfDoc = await PDFLib.PDFDocument.create();
+
+      const pageScale = minmax(inputScaleFactor.valueAsNumber, 1, 5);
+      const pageStart = minmax(inputStartPage.valueAsNumber, 1, pdf.numPages);
+      const pageEnd = minmax(inputEndPage.valueAsNumber, inputEndPage.valueAsNumber, pdf.numPages);
+      const tLow = minmax(inputTolerance.valueAsNumber, 0, 255);
+      const tHigh = 255 - tLow;
+
+      if (pageEnd < pageStart) return;
+
+      inputContainer.style.display = "none";
+      progressContainer.style.display = "block";
+
+      for (let i = pageStart; i <= pageEnd; i++) {
+        progressBar.style.width = `${i / pageEnd * 100}%`;
+        progressText.innerText = (i === pageEnd) ? "Finalizing..." : `${i}/${pageEnd}`;
+
+        const page = await pdf.getPage(i);
+        const viewport = page.getViewport({ scale: pageScale });
+        const canvas = document.createElement("canvas");
+        const canvasContext = canvas.getContext("2d");
+
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+
+        await page.render({ canvasContext, viewport }).promise;
+
+        // Apply dark mode effect
+        const imageData = canvasContext.getImageData(0, 0, canvas.width, canvas.height);
+        const data = imageData.data;
+
+        if (tLow === 0) {
+          for (let j = 0; j < data.length; j += 4) {
+            data[j] = 255 - data[j] + 25;
+            data[j + 1] = 255 - data[j + 1] + 25;
+            data[j + 2] = 255 - data[j + 2] + 25;
+          }
+        } else {
+          for (let j = 0; j < data.length; j += 4) {
+            const r = data[j];
+            const g = data[j + 1];
+            const b = data[j + 2];
+            if ((r <= tLow && g <= tLow && b <= tLow) || (r >= tHigh && g >= tHigh && b >= tHigh)) {
+              data[j] = 255 - r + 25;
+              data[j + 1] = 255 - g + 25;
+              data[j + 2] = 255 - b + 25;
+            }
+          }
+        }
+
+        canvasContext.putImageData(imageData, 0, 0);
+        if (!multipleInput) pdfContainer.appendChild(canvas);
+
+        // Convert modified canvas to PNG and add to PDF
+        const imgBytes = await new Promise((resolve) => {
+          canvas.toBlob((blob) => blob.arrayBuffer().then(resolve), "image/png");
+        });
+        const jpgImage = await pdfDoc.embedPng(imgBytes);
+        const newPage = pdfDoc.addPage([viewport.width, viewport.height]);
+        newPage.drawImage(jpgImage, {
+          x: 0, y: 0,
+          width: viewport.width,
+          height: viewport.height,
+        });
+      }
+
+      progressContainer.style.display = "none";
+
+      const name = fileName.replace(/\.pdf$/i, "");
+      const bytes = await pdfDoc.save();
+
+      if (multipleInput) {
+        handleDownload(name, bytes);
+      } else {
+        downloadBtn.style.display = "inline-block";
+        downloadBtn.onclick = (_) => handleDownload(name, bytes);
+      }
+    }
+  </script>
+</body>
+
+</html>

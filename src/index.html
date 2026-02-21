@@ -2,9 +2,56 @@
 <html lang="en-US">
 
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charSet="utf-8">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <meta name="author" content="Mitul Vaghamshi">
+  <meta name="description" content="Convert PDF to dark mode - Offline.">
+
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Dark PDF Converter">
+  <meta property="og:site_name" content="Dark PDF Converter">
+  <meta property="og:description" content="Convert PDF to dark mode - Offline.">
+  <meta property="og:url" content="https://mitulvaghamshi.github.io/dark-pdf">
+  <meta property="og:image" content="https://mitulvaghamshi.github.io/dark-pdf/icon.webp">
+  <meta property="og:image:type" content="image/webp">
+  <meta property="og:image:width" content="265">
+  <meta property="og:image:height" content="265">
+
+  <link href="https://mitulvaghamshi.github.io/dark-pdf" rel="canonical">
+
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Dark PDF">
+  <link rel="apple-touch-icon" type="image/webp" href="icon.webp">
+
+  <link rel="icon" type="image/webp" href="icon.webp">
+  <link rel="shortcut icon" type="image/webp" href="icon.webp">
+
   <title>Dark PDF | Convert PDFs to Dark Mode | Offline</title>
+  <meta name="keywords" content="Dark PDF, PDF Converter, Dark Mode, PDF Reader, Easy PDF Converter, Offline, Free PDF Converter">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Dark PDF | Convert PDFs to Dark Mode | Offline">
+  <meta name="twitter:description" content="Convert PDF to dark mode - offline - free.">
+  <meta name="twitter:image" content="https://mitulvaghamshi.github.io/dark-pdf/icon.webp">
+
+  <!-- JSON-LD Structured Data -->
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "name": "Dark PDF - Convert PDFs to Dark Mode.",
+      "image": "https://mitulvaghamshi.github.io/dark-pdf/icon.webp",
+      "url": "https://mitulvaghamshi.github.io/dark-pdf/",
+      "priceRange": "Free",
+      "description": "Convert PDF to dark mode - offline - free.",
+      "potentialAction": {
+        "@type": "ViewAction",
+        "target": "https://mitulvaghamshi.github.io/dark-pdf/"
+      }
+    }
+  </script>
   <style>
     :root {
       color-scheme: dark light;
@@ -92,7 +139,7 @@
 
 <body>
   <main>
-    <h1>👁️ ❤️ Dark PDF</h1>
+    <h1>❤️ Dark PDF</h1>
     <div id="inputContainer">
       <input type="number" id="scaleFactor" placeholder="Scale Factor (1-5): 1" /> |
       <input type="number" id="startPage" placeholder="Start Page: 1" /> |
@@ -113,7 +160,11 @@
   <script>pdfjsLib.GlobalWorkerOptions.workerSrc = "lib/pdf.worker.min.js";</script>
   <script src="lib/pdf-lib.min.js" defer></script>
 
-  <script>
+  <script type="module" src="">
+
+  </script>
+
+  <script type="module">
     const progressContainer = document.getElementById("progressContainer");
     const progressBar = document.getElementById("progressBar");
     const progressText = document.getElementById("progressText");

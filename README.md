@@ -1,4 +1,4 @@
-# 👁️ ❤️ Dark PDF
+# ❤️ Dark PDF
 
 Convert (Invert) PDF to dark mode within the browser.
 
@@ -17,16 +17,17 @@ Convert (Invert) PDF to dark mode within the browser.
 
 - No hidden api call, works offline.
 - Optionally save converted PDF (not recommanded due to file size).
+- Supports converting multiple PDF simultaneously, Limit == RAM.
 - Convert > Read > Refresh.
 
 ## Convertion Options
 
 All options are optional and has default values.
 
-- `Scale Factor (1-5): 1`: Can give you clear image (Clearity == File Size).
-- `Start Page: 1`: Specify where to start conversion.
-- `End Page: auto`: Specify where to stop conversion.
-- `Color Limit (0-255): 0`:
+- **Scale Factor (1-5): 1**: 5 Can give you clear image, (Clearity == File Size).
+- **Start Page: 1**: Specify where to start conversion.
+- **End Page: auto**: Specify where to stop conversion.
+- **Color Limit (0-255): 0**:
   - This can be useful to exclude images or any colorful content from being inverted.
   - Manually control what range of colors to exclud from both side of the color range.
   - e.g.: `Color Limit (0-255): 5` will subtract `5` from each side of the color range such that (0-255) will become (5-250), so any color between (5-250) remain untouched.

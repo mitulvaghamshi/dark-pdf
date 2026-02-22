@@ -1,33 +1,36 @@
-# ❤️ Dark PDF
+# Dark PDF
 
-Convert (Invert) PDF to dark mode within the browser.
+[![Build and deploy to pages](https://github.com/mitulvaghamshi/dark-pdf/actions/workflows/pages.yml/badge.svg)](https://github.com/mitulvaghamshi/dark-pdf/actions/workflows/pages.yml)
 
-## What is this
+[Convert](https://mitulvaghamshi.github.io/dark-pdf/) PDF to dark mode - free, offline, on-device.
 
-- This uses pdfjs and canvas to convert pdf to dark mode and save it as a as pdf by embeding jpeg images.
-- Simply put, by default this inverts all colors (except white) to dark.
+## What is this?
 
-## Why is this
-
-- This is definately not an optimal solution, but better then my bleeding eye looking at the bright-white color.
-- Also resulting PDF uses far more storage then original as each is conveted and saved as a jpeg image.
-- Optinally: MacOS Preview.app offers an option to read PDFs in dark mode without saving it.
+- This tool uses `pdfjs` and canvas to convert a PDF to dark mode.
+  - Simply put, by default, it inverts all colors to dark gray.
+  - Reading each page into a canvas and inverting pixel-by-pixel.
+  - Render that canvas as a JPEG image to HTML for reading and also to the resultin PDF for download.
+- This is definitely not an optimal solution by any means, but it's better than my poor eyesight looking at bright white colors.
+- The resulting PDF uses significantly more storage than the original one as each page is rendered as a JPEG image.
+- Optionally, MacOS `Preview.app` offers an option to read PDFs in dark mode but cannot be saved to dark mode.
 
 ## Features
 
-- No hidden api call, works offline.
-- Optionally save converted PDF (not recommanded due to file size).
-- Supports converting multiple PDF simultaneously, Limit == RAM.
-- Convert > Read > Refresh.
+- Load > Convert > Read > Refresh.
+- Works Offline - Always On-Device.
+- Optionally, save the converted PDF to read later.
+- Supports converting multiple PDFs simultaneously.
 
-## Convertion Options
+## Conversion Options
 
-All options are optional and has default values.
+- **Scale Factor (1-5)**: Specify the image clearity (Default: 1). 2 is recommanded for good quality.
+- **Start Page**: Specify the starting page for the conversion (Default: 1).
+- **End Page**: Specify the ending page for the conversion (Default: All).
 
-- **Scale Factor (1-5): 1**: 5 Can give you clear image, (Clearity == File Size).
-- **Start Page: 1**: Specify where to start conversion.
-- **End Page: auto**: Specify where to stop conversion.
-- **Color Limit (0-255): 0**:
-  - This can be useful to exclude images or any colorful content from being inverted.
-  - Manually control what range of colors to exclud from both side of the color range.
-  - e.g.: `Color Limit (0-255): 5` will subtract `5` from each side of the color range such that (0-255) will become (5-250), so any color between (5-250) remain untouched.
+## Dependencies
+
+Dark PDF uses local copies of these libs:
+
+- https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.11.0/pdf-lib.min.js
+- https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js
+- https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js

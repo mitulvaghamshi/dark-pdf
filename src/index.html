@@ -94,23 +94,19 @@
       position: absolute;
       top: 20px;
       right: 20px;
-      font-size: 2em;
       border: none;
       cursor: pointer;
       background-color: transparent;
     }
 
     #pdfContainer {
-      width: 90%;
-      margin: auto;
+      width: 100%;
+      margin: 0;
     }
 
     canvas,
     img {
       width: 100%;
-      border: 1px solid;
-      border-radius: 4px;
-      margin-bottom: 10px;
     }
 
     #progressContainer {
@@ -126,7 +122,7 @@
       width: 0;
       height: 20px;
       line-height: 20px;
-      background-color: dodgerblue;
+      background-color: royalblue;
       transition: width 0.3s ease-in-out;
     }
 
@@ -139,12 +135,11 @@
 
 <body>
   <main>
-    <h1>❤️ Dark PDF</h1>
+    <h1>Dark PDF</h1>
     <div id="inputContainer">
-      <input type="number" id="scaleFactor" placeholder="Scale Factor (1-5): 1" /> |
-      <input type="number" id="startPage" placeholder="Start Page: 1" /> |
-      <input type="number" id="endPage" placeholder="End Page: auto" /> |
-      <input type="number" id="tolerance" placeholder="Color Limit (0-255): 0" />
+      <input type="number" id="scaleFactor" placeholder="Scale Factor (1-5): 1" />
+      <input type="number" id="startPage" placeholder="Start Page: 1" />
+      <input type="number" id="endPage" placeholder="End Page: auto" />
       <input type="file" id="fileInput" multiple accept="application/pdf" />
       <label for="fileInput" id="uploadContainer">⊕</label>
     </div>
@@ -160,10 +155,6 @@
   <script>pdfjsLib.GlobalWorkerOptions.workerSrc = "lib/pdf.worker.min.js";</script>
   <script src="lib/pdf-lib.min.js" defer></script>
 
-  <script type="module" src="">
-
-  </script>
-
   <script type="module">
     const progressContainer = document.getElementById("progressContainer");
     const progressBar = document.getElementById("progressBar");
@@ -177,7 +168,6 @@
     const inputScaleFactor = document.getElementById("scaleFactor");
     const inputStartPage = document.getElementById("startPage");
     const inputEndPage = document.getElementById("endPage");
-    const inputTolerance = document.getElementById("tolerance");
 
     /**
      * If multiple files selected:
@@ -188,28 +178,34 @@
 
     document.getElementById("fileInput").onchange = handleUpload;
 
-    document.body.ondrop = handleUpload;
     document.body.ondragover = (event) => event.preventDefault();
+    document.body.ondrop = handleUpload;
 
     function handleDownload(name, bytes) {
       if (!bytes) return;
+
       const blob = new Blob([bytes], { type: "application/pdf" });
+
       const link = document.createElement("a");
       link.href = URL.createObjectURL(blob);
       link.download = `${name} (Dark Mode).pdf`;
       link.click();
+
       downloadBtn.style.display = "none";
     }
 
     function handleUpload(event) {
       event.preventDefault();
+
       const files = event.dataTransfer ? event.dataTransfer.files : event.target.files;
       multipleInput = files.length > 1;
+
       for (const file of files) handleFile(file);
     }
 
     function handleFile(file) {
       if (file.type !== "application/pdf") return;
+
       const fileReader = new FileReader();
       fileReader.onload = async function () {
         await renderPDF(file.name, new Uint8Array(this.result));
@@ -228,8 +224,6 @@
       const pageScale = minmax(inputScaleFactor.valueAsNumber, 1, 5);
       const pageStart = minmax(inputStartPage.valueAsNumber, 1, pdf.numPages);
       const pageEnd = minmax(inputEndPage.valueAsNumber, inputEndPage.valueAsNumber, pdf.numPages);
-      const tLow = minmax(inputTolerance.valueAsNumber, 0, 255);
-      const tHigh = 255 - tLow;
 
       if (pageEnd < pageStart) return;
 
@@ -266,38 +260,36 @@
 
         await page.render({ canvasContext, viewport: renderViewport }).promise;
 
-        // Apply dark mode effect
         const imageData = canvasContext.getImageData(0, 0, canvas.width, canvas.height);
         const data = imageData.data;
 
-        if (tLow === 0) {
-          for (let j = 0; j < data.length; j += 4) {
-            data[j] = 255 - data[j] + 25;
-            data[j + 1] = 255 - data[j + 1] + 25;
-            data[j + 2] = 255 - data[j + 2] + 25;
-          }
-        } else {
-          for (let j = 0; j < data.length; j += 4) {
-            const r = data[j];
-            const g = data[j + 1];
-            const b = data[j + 2];
-            if ((r <= tLow && g <= tLow && b <= tLow) || (r >= tHigh && g >= tHigh && b >= tHigh)) {
-              data[j] = 255 - r + 25;
-              data[j + 1] = 255 - g + 25;
-              data[j + 2] = 255 - b + 25;
-            }
+        // Apply dark mode effect:
+        // - Calculate how "colorful" a pixel is (Chroma).
+        // - Pure grayscale (text/background) has a chroma of 0.
+        // - If the pixel is close to grayscale (below the color limit), invert it.
+        // - This protects vivid and colorful image pixels from being inverted!
+        for (let j = 0; j < data.length; j += 4) {
+          const r = data[j];
+          const g = data[j + 1];
+          const b = data[j + 2];
+
+          if (Math.max(r, g, b) - Math.min(r, g, b) <= 0) {
+            data[j] = 255 - r + 25;
+            data[j + 1] = 255 - g + 25;
+            data[j + 2] = 255 - b + 25;
           }
         }
 
         canvasContext.putImageData(imageData, 0, 0);
+
         const imgBlob = await new Promise((resolve) => {
-          canvas.toBlob(resolve, "image/jpeg", 1);
+          canvas.toBlob(resolve, "image/jpeg", 0.9);
         });
         const imgBytes = await imgBlob.arrayBuffer();
         const jpgImage = await pdfDoc.embedJpg(imgBytes);
 
         if (!multipleInput) {
-          const img = document.createElement("img");
+          const img = new Image();
           img.src = URL.createObjectURL(imgBlob);
           pdfContainer.appendChild(img);
         }

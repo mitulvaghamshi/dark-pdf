@@ -15,9 +15,18 @@
   <meta property="og:description" content="Convert PDF to dark mode - Offline.">
   <meta property="og:url" content="https://mitulvaghamshi.github.io/dark-pdf">
   <meta property="og:image" content="https://mitulvaghamshi.github.io/dark-pdf/icon.webp">
+  <meta property="og:image:alt" content="Website logo with red heart and white background.">
   <meta property="og:image:type" content="image/webp">
   <meta property="og:image:width" content="265">
   <meta property="og:image:height" content="265">
+
+  <meta name="keywords" content="Dark PDF, PDF Converter, Dark Mode, PDF Reader, Easy PDF Converter, Offline, Free PDF Converter, On Device">
+
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Dark PDF | Convert PDFs to Dark Mode | Offline">
+  <meta name="twitter:description" content="Convert PDF to dark mode - offline and free.">
+  <meta name="twitter:image" content="https://mitulvaghamshi.github.io/dark-pdf/icon.webp">
+  <meta name="twitter:image:alt" content="Convert PDF to dark mode - offline and free">
 
   <link href="https://mitulvaghamshi.github.io/dark-pdf" rel="canonical">
 
@@ -29,15 +38,7 @@
   <link rel="shortcut icon" type="image/webp" href="icon.webp">
 
   <title>Dark PDF | Convert PDFs to Dark Mode | Offline</title>
-  <meta name="keywords" content="Dark PDF, PDF Converter, Dark Mode, PDF Reader, Easy PDF Converter, Offline, Free PDF Converter">
 
-  <!-- Twitter Card -->
-  <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Dark PDF | Convert PDFs to Dark Mode | Offline">
-  <meta name="twitter:description" content="Convert PDF to dark mode - offline - free.">
-  <meta name="twitter:image" content="https://mitulvaghamshi.github.io/dark-pdf/icon.webp">
-
-  <!-- JSON-LD Structured Data -->
   <script type="application/ld+json">
     {
       "@context": "https://schema.org",
@@ -63,21 +64,18 @@
       width: 100%;
       height: 100%;
       text-align: center;
-      font-family: Arial, sans-serif;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
     }
 
-    #fileInput {
+    #file-input {
       display: none;
     }
 
     input {
       padding: 10px;
-      margin: 10px;
-      border: none;
-      border-radius: 4px;
     }
 
-    #uploadContainer {
+    #upload-container {
       display: block;
       width: 80vw;
       height: 70vh;
@@ -89,36 +87,32 @@
       align-content: center;
     }
 
-    #downloadBtn {
+    #download-button {
       display: none;
       position: absolute;
-      top: 20px;
-      right: 20px;
+      top: 10px;
+      right: 10px;
       border: none;
       cursor: pointer;
+      font-size: xx-large;
       background-color: transparent;
     }
 
-    #pdfContainer {
+    #preview-container {
       width: 100%;
-      margin: 0;
     }
 
-    canvas,
     img {
       width: 100%;
     }
 
-    #progressContainer {
+    #progress-container {
       display: none;
-      width: 90%;
-      max-width: 90%;
-      padding: 10px;
-      margin: 20px auto;
+      width: 100%;
       text-align: center;
     }
 
-    #progressBar {
+    #progress-bar {
       width: 0;
       height: 20px;
       line-height: 20px;
@@ -126,8 +120,8 @@
       transition: width 0.3s ease-in-out;
     }
 
-    #progressText {
-      margin: 20px;
+    #progress-text {
+      margin: 10px;
       font-weight: bold;
     }
   </style>
@@ -135,20 +129,20 @@
 
 <body>
   <main>
-    <h1>Dark PDF</h1>
-    <div id="inputContainer">
-      <input type="number" id="scaleFactor" placeholder="Scale Factor (1-5): 1" />
-      <input type="number" id="startPage" placeholder="Start Page: 1" />
-      <input type="number" id="endPage" placeholder="End Page: auto" />
-      <input type="file" id="fileInput" multiple accept="application/pdf" />
-      <label for="fileInput" id="uploadContainer">⊕</label>
+    <h1 id="app-title">Dark PDF Converter</h1>
+    <div id="input-container">
+      <input type="number" id="image-quality" placeholder="Image Quality (1-5): 1" />
+      <input type="number" id="start-page" placeholder="Start Page: 1" />
+      <input type="number" id="end-page" placeholder="End Page: Auto" />
+      <input type="file" id="file-input" multiple accept="application/pdf" />
+      <label for="file-input" id="upload-container">⊕</label>
     </div>
-    <div id="progressContainer">
-      <div id="progressBar"></div>
-      <div id="progressText">0/0</div>
+    <div id="progress-container">
+      <div id="progress-bar"></div>
+      <div id="progress-text">0/0</div>
     </div>
-    <button id="downloadBtn">💾</button>
-    <div id="pdfContainer"></div>
+    <button id="download-button">⬇</button>
+    <div id="preview-container"></div>
   </main>
 
   <script src="lib/pdf.min.js"></script>
@@ -156,27 +150,23 @@
   <script src="lib/pdf-lib.min.js" defer></script>
 
   <script type="module">
-    const progressContainer = document.getElementById("progressContainer");
-    const progressBar = document.getElementById("progressBar");
-    const progressText = document.getElementById("progressText");
+    const appTitle = document.getElementById("app-title");
+    const progressContainer = document.getElementById("progress-container");
+    const progressBar = document.getElementById("progress-bar");
+    const progressText = document.getElementById("progress-text");
 
-    const downloadBtn = document.getElementById("downloadBtn");
-    const pdfContainer = document.getElementById("pdfContainer");
-    const uploadContainer = document.getElementById("uploadContainer");
+    const downloadButton = document.getElementById("download-button");
+    const previewContainer = document.getElementById("preview-container");
+    const uploadContainer = document.getElementById("upload-container");
 
-    const inputContainer = document.getElementById("inputContainer");
-    const inputScaleFactor = document.getElementById("scaleFactor");
-    const inputStartPage = document.getElementById("startPage");
-    const inputEndPage = document.getElementById("endPage");
+    const inputContainer = document.getElementById("input-container");
+    const inputImageQuality = document.getElementById("image-quality");
+    const inputStartPage = document.getElementById("start-page");
+    const inputEndPage = document.getElementById("end-page");
 
-    /**
-     * If multiple files selected:
-     * - Don't display converted PDF in browser.
-     * - Enable auto-downlod.
-     */
-    let multipleInput;
+    let multipleInput; // Disable browser preview and enable auto-download.
 
-    document.getElementById("fileInput").onchange = handleUpload;
+    document.getElementById("file-input").onchange = handleUpload;
 
     document.body.ondragover = (event) => event.preventDefault();
     document.body.ondrop = handleUpload;
@@ -191,7 +181,7 @@
       link.download = `${name} (Dark Mode).pdf`;
       link.click();
 
-      downloadBtn.style.display = "none";
+      downloadButton.style.display = "none";
     }
 
     function handleUpload(event) {
@@ -213,7 +203,7 @@
       fileReader.readAsArrayBuffer(file);
     }
 
-    function minmax(value, min, max) {
+    function clamp(value, min, max) {
       return Math.min(Math.max((isNaN(value) ? 0 : value), isNaN(min) ? max : min), max);
     }
 
@@ -221,17 +211,19 @@
       const pdf = await pdfjsLib.getDocument({ data: pdfData }).promise;
       const pdfDoc = await PDFLib.PDFDocument.create();
 
-      const pageScale = minmax(inputScaleFactor.valueAsNumber, 1, 5);
-      const pageStart = minmax(inputStartPage.valueAsNumber, 1, pdf.numPages);
-      const pageEnd = minmax(inputEndPage.valueAsNumber, inputEndPage.valueAsNumber, pdf.numPages);
+      // Clamp user inputs within a valid range.
+      const pageScale = clamp(inputImageQuality.valueAsNumber, 1, 5);
+      const pageStart = clamp(inputStartPage.valueAsNumber, 1, pdf.numPages);
+      const pageEnd = clamp(inputEndPage.valueAsNumber, inputEndPage.valueAsNumber, pdf.numPages);
 
       if (pageEnd < pageStart) return;
 
+      appTitle.innerText = fileName;
       inputContainer.style.display = "none";
       progressContainer.style.display = "block";
 
       if (!multipleInput) {
-        pdfContainer.innerHTML = "";
+        previewContainer.innerHTML = "";
       }
 
       const canvas = document.createElement("canvas");
@@ -239,17 +231,17 @@
 
       for (let i = pageStart; i <= pageEnd; i++) {
         progressBar.style.width = `${i / pageEnd * 100}%`;
-        progressText.innerText = (i === pageEnd) ? "Finalizing..." : `${i}/${pageEnd}`;
+        progressText.innerText = (i === pageEnd) ? "Finalizing..." : `Processed ${i} of ${pageEnd} pages`;
 
         // Yield to the event loop to prevent UI freezing and allow GC
         await new Promise(resolve => requestAnimationFrame(resolve));
 
         const page = await pdf.getPage(i);
 
-        // 1. Base viewport reflects the actual dimensions of the PDF page
+        // Base viewport reflects the actual dimensions of the PDF page
         const baseViewport = page.getViewport({ scale: 1 });
 
-        // 2. Render viewport reflects the resolution we process the image at.
+        // Render viewport reflects the resolution we process the image at.
         // We multiply the user's scale by the device's pixel ratio (or at least 2x)
         // to guarantee high-DPI text rendering, eliminating blur even at Scale 1.
         const renderScale = pageScale * Math.max(window.devicePixelRatio || 1, 2);
@@ -263,11 +255,10 @@
         const imageData = canvasContext.getImageData(0, 0, canvas.width, canvas.height);
         const data = imageData.data;
 
-        // Apply dark mode effect:
-        // - Calculate how "colorful" a pixel is (Chroma).
-        // - Pure grayscale (text/background) has a chroma of 0.
-        // - If the pixel is close to grayscale (below the color limit), invert it.
-        // - This protects vivid and colorful image pixels from being inverted!
+        // Apply the dark mode effect by calculating the "colorfulness" of each pixel (Chroma).
+        // Pure grayscale pixels (text or background) have a chroma of 0.
+        // If a pixel is close to grayscale (below the color limit), invert it.
+        // This prevents vivid and colorful image pixels from being inverted!
         for (let j = 0; j < data.length; j += 4) {
           const r = data[j];
           const g = data[j + 1];
@@ -291,10 +282,10 @@
         if (!multipleInput) {
           const img = new Image();
           img.src = URL.createObjectURL(imgBlob);
-          pdfContainer.appendChild(img);
+          previewContainer.appendChild(img);
         }
 
-        // 3. Keep the new PDF page the *exact same physical size* as the original page,
+        // Keep the new PDF page the *exact same physical size* as the original page,
         // but draw our high-resolution JPEG into it!
         const newPage = pdfDoc.addPage([baseViewport.width, baseViewport.height]);
         newPage.drawImage(jpgImage, {
@@ -302,6 +293,7 @@
           width: baseViewport.width,
           height: baseViewport.height,
         });
+
         page.cleanup();
       }
 
@@ -317,8 +309,8 @@
       if (multipleInput) {
         handleDownload(name, bytes);
       } else {
-        downloadBtn.style.display = "inline-block";
-        downloadBtn.onclick = (_) => handleDownload(name, bytes);
+        downloadButton.style.display = "inline-block";
+        downloadButton.onclick = (_) => handleDownload(name, bytes);
       }
     }
   </script>

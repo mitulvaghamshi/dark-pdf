@@ -1,0 +1,17 @@
+{
+  "id": "/",
+  "start_url": ".",
+  "name": "Dark PDF Converter",
+  "short_name": "DarkPDF",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "prefer_related_applications": false,
+  "description": "On Device PDF Converter - Read PDF in dark mode.",
+  "icons": [
+    {
+      "src": "src/icon.webp",
+      "type": "image/webp",
+      "sizes": "240x240"
+    }
+  ]
+}

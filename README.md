@@ -21,16 +21,32 @@
 - Optionally, save the converted PDF to read later.
 - Supports converting multiple PDFs simultaneously.
 
-## Conversion Options
+## Development and Build
 
-- **Scale Factor (1-5)**: Specify the image clearity (Default: 1). 2 is recommanded for good quality.
-- **Start Page**: Specify the starting page for the conversion (Default: 1).
-- **End Page**: Specify the ending page for the conversion (Default: All).
+This application is built using **React**, **TypeScript**, and **Vite**. It is configured as a **Progressive Web App (PWA)** that runs 100% on-device and works completely offline.
 
-## Dependencies
+### Getting Started
 
-Dark PDF uses local copies of these libs:
+1. **Install dependencies:**
+   ```bash
+   npm install
+   ```
 
-- https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.11.0/pdf-lib.min.js
-- https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js
-- https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js
+2. **Run the development server:**
+   ```bash
+   npm run dev
+   ```
+
+3. **Build the production application (PWA):**
+   ```bash
+   npm run build
+   ```
+
+### Core Technologies
+
+- **React & TypeScript**: Modern component-driven state architecture.
+- **Vite & Rollup**: High-performance bundler.
+- **pdfjs-dist**: PDF document loading and canvas page rendering.
+- **pdf-lib**: In-memory rebuilding of high-resolution dark-mode PDFs.
+- **vite-plugin-pwa**: Automated service worker (`sw.js`) generation using Workbox for offline asset caching.
+
